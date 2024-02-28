@@ -1,5 +1,3 @@
-# Github readme
-
 ## **Data-driven Identification of Urgent Surgical Procedures For Use in Epidemiological Studies in Trauma**
 
   
