@@ -12,6 +12,7 @@ id_chrs <- c(0:9, letters)
 urgency_levels_collapsed <- c("<1hr","<4hrs", "<8hrs", "<24hrs","<72hrs")
 
 #bring in your study databaase, assumes it is in the working directory
+#examples of the expected structure of the database is in the github repository
 
 study_db <- readxl("study_db.xlsx")
 
