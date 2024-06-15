@@ -137,6 +137,52 @@ rename(booked_procedure = achi_proc_code)%>%
   mutate(study_id_unique = str_c(study_id, row_number())) %>%
   relocate(study_id_unique)
 
+
+#some summary information about the procedures
+study_db_trauma %>%
+  filter(trauma_pt == TRUE) %>%
+  freq_table(primary_proc)
+
+study_db_trauma %>%
+  filter(trauma_pt == TRUE) %>%
+  freq_table(primary_proc, correct)
+
+study_db_trauma <- study_db %>%
+  filter(trauma_pt == TRUE) %>%
+  filter(primary_proc == TRUE & correct == "no")
+
+pri_proc_wrong <- pri_proc_wrong$study_id_full
+
+study_db_trauma %>%
+  filter(study_id_full %in% pri_proc_wrong) %>%
+  filter(trauma_pt == TRUE) %>%
+  filter(primary_proc == FALSE) %>%
+  group_by(study_id_full) %>%
+  mutate(pri_capt = any(correct == "yes")) %>%
+  slice_head(n=1) %>%
+  ungroup() %>%
+  freq_table(pri_capt)
+
+
+
+
+study_db_trauma <- study_db_trauma %>%
+  filter(trauma_pt == TRUE) %>%
+  filter(correct == "yes") %>%
+  distinct(study_id, record_id, booked_procedure, .keep_all = TRUE)
+
+study_db_trauma %>%
+  distinct(study_id) %>%
+  nrow()
+
+study_db_trauma %>%
+  distinct(booked_procedure) %>%
+  nrow()
+
+study_db_trauma %>%
+  distinct(procedural_consultant) %>%
+  nrow()
+
 # FUNCTION get list of procedures  -----------------------------------------
 #this function takes the data and creates the table of procedures and urgency 
 get_list_of_procedures <- function(study_db = "study_db_trauma", agreement_threshold, consensus_threshold, 
