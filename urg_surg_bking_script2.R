@@ -119,11 +119,15 @@ achi_text <- achi_db %>% select(achi_proc_code, procedure_text)
 proc_to_check <- proc_to_check %>%
   left_join(achi_text, by = c("achi_proc_code"))
 
-#need to fill in the correct column
+write.xlsx(proc_to_check, "table_of_proc.xlsx")
 
-table_of_proc <- read_in matched table of procedures
+#you now need to fill in the correct column and save it as table_of_proc.xlsx
 
-pivot_study_db <- study_db_trauma %>%
+#bring in the labeled correct
+table_of_proc <- read.xlsx("table_of_proc.xlsx") %>%
+  select(study_id, achi_proc_code, correct, primary_proc) 
+
+study_db_trauma <- study_db_trauma %>%
   pivot_longer(cols = c(coded_primary_procedure, starts_with("additional_procedure")), names_to = "proc_no",
                values_to = "achi_proc_code") %>%
   filter(!is.na(achi_proc_code)) %>%
@@ -255,6 +259,9 @@ get_list_of_procedures <- function(study_db = "study_db_trauma", agreement_thres
     select(booked_procedure, procedural_consultant) %>%
     rstatix::freq_table(booked_procedure, procedural_consultant)
   
+  # Define the columns to check
+  columns_to_check <- c('<4hrs', '<8hrs', '<24hrs', '<72hrs')
+  
   #calculate agreement and consensus; note the agreement looks at agreement ebtween the 5 levels
   #whereas the agreement used in this study is 1 and 4 hours (so really 4 levels)
   surgi_db_all_rated_agreement <- surgi_db_priority %>%
@@ -263,7 +270,22 @@ get_list_of_procedures <- function(study_db = "study_db_trauma", agreement_thres
                                              emerg_priority_collapse, emerg_priority_collapse)) %>%
     count(booked_procedure, emerg_priority_collapse) %>%
     pivot_wider(names_from = emerg_priority_collapse, values_from = n) %>%
-    mutate_if(is.numeric , replace_na, replace = 0) %>%
+    mutate_if(is.numeric , replace_na, replace = 0) 
+  
+  cols_present <- names(surgi_db_all_rated_agreement)
+  cols_present<- cols_present[cols_present != "booked_procedure"]
+  cols_to_add <- setdiff(columns_to_check,cols_present)
+  if(length(cols_to_add) >0) {
+    new_cols_df <- as.data.frame(matrix("0", nrow = nrow(surgi_db_all_rated), ncol = length(cols_to_add)))
+    names(new_cols_df) <- cols_to_add
+    
+    
+    
+  
+  surgi_db_all_rated_agreement <- bind_cols(surgi_db_all_rated_agreement, new_cols_df) 
+  }
+  
+  surgi_db_all_rated_agreement <- surgi_db_all_rated_agreement %>%
     convert(num(`<4hrs`,`<8hrs`,`<24hrs` ,`<72hrs`)) %>%
     pivot_longer(cols = c(-booked_procedure), names_to = "emerg_priority_collapse", values_to = "n") %>%
     group_by(booked_procedure) %>%
@@ -278,17 +300,34 @@ get_list_of_procedures <- function(study_db = "study_db_trauma", agreement_thres
     replace(is.na(.), 0) %>%
     left_join(surgi_db_all_rated_agreement, by = "booked_procedure")
   
-  #change the counts to proportionn
+  #change the counts to proportion
   
   #5 point likert urgency levels (<=1hr-Life threatening, <4 hours, <=8hrs-Non-critical but emergent, <=24hrs-Non critical, non-emergent, <=72hrsCannot discharge before procedure
-  
+
   
   surgi_db_all_rated_prop <- surgi_db_all_rated %>%
     arrange(desc(n)) %>%
     select(-n) %>%
-    pivot_wider(names_from = emerg_priority_collapse, values_from = prop) %>%
+    pivot_wider(names_from = emerg_priority_collapse, values_from = prop) 
+  
+  columns_to_check <- c('<1hr','<4hrs', '<8hrs', '<24hrs', '<72hrs')
+  cols_present <- names(surgi_db_all_rated_prop)
+  cols_present<- cols_present[cols_present != "booked_procedure"]
+  cols_to_add <- setdiff(columns_to_check,cols_present)
+  if(length(cols_to_add) >0) {
+    new_cols_df <- as.data.frame(matrix("0", nrow = nrow(surgi_db_all_rated), ncol = length(cols_to_add)))
+    names(new_cols_df) <- cols_to_add
+  
+  
+
+  surgi_db_all_rated_prop <- surgi_db_all_rated_prop %>%
+    bind_cols(new_cols_df) 
+  }
+  
+  surgi_db_all_rated_prop <- surgi_db_all_rated_prop %>%
     replace(is.na(.), 0) %>%
     left_join(surgi_db_all_rated_agreement, by = "booked_procedure") %>%
+    convert(num(`<1hr`,`<4hrs`,`<8hrs`,`<24hrs` ,`<72hrs`)) %>%
     relocate(booked_procedure, `<1hr`,`<4hrs`,`<8hrs`,`<24hrs` ,`<72hrs`,Agreement, Consensus) %>%
     mutate(urgent_total_pcnt = case_when(
       urgent_value == 1 ~ `<1hr`,
@@ -298,7 +337,7 @@ get_list_of_procedures <- function(study_db = "study_db_trauma", agreement_thres
     mutate(urgent_surgery_by_agmnt = if_else(urgent_total_pcnt >= agreement_threshold, TRUE, FALSE, FALSE))%>%
     mutate(urgent_surgery_by_cnsus = if_else(urgent_total_pcnt < agreement_threshold & urgent_total_pcnt > 50 & Consensus < consensus_threshold, TRUE, FALSE, FALSE)) %>%
     left_join(surgi_db_proc_n, by = "booked_procedure")
-  #calculate 95% CI and put into separate dataframe to be added in at the very end
+   #calculate 95% CI and put into separate dataframe to be added in at the very end
   calc_ci <- surgi_db_all_rated_prop %>%
     select(booked_procedure, urgent_total_pcnt, proc_n) %>%
     mutate(n_urgent = (urgent_total_pcnt/100)*proc_n) %>%
