@@ -4,8 +4,8 @@
 
 _Matthew Miller, Louise Jorm and Blanca Gallego_
 
+citation: Miller M, Jorm L, Gallego B. Data-driven identification of urgent surgical procedures for use in trauma outcomes measurement. Trauma Surg Acute Care Open. 2025;10:e001783. doi:10.1136/tsaco-2025-001783
   
-
 The accompanying series of R scripts are used to create a list of urgent surgery from surgical booking priority. They can be used for all surgical patients, or limited to those admitted with trauma. Options are included to change the agreement cut off, consensus cut off, age group, and whether to use trauma-only or all surgical patients. Instructions are also given on how to alter the classification of urgency to suit bespoke definitions. R code to generate lists for specific age groups and genders are also provided.
 
   
