@@ -293,7 +293,7 @@ Output: `sex_age_hospital_models.xlsx`.
 
 The scripts in this repository were proofread, tidied and commented with the
 help of Claude Opus 5.5 (Anthropic) on 14–15 October 2026. This README was
-drafted with, and proofread by, the same model to check it is consistent with
+proofread by the same model to check it is consistent with
 the scripts. All analytical decisions and results are the authors' own.
 
 ## Licence
