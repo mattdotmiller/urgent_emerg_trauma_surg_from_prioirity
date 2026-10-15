@@ -17,8 +17,6 @@ The scripts in this repository are for the multi-site follow-up study, which
 adds an automated method for matching booked procedures to coded procedures. A
 link to that paper will be added here when it is published.
 
-The original pilot study scripts are in the `Pilot study scripts` folder, with
-their original instructions (the pilot README).
 
 ## Running the pipeline
 
